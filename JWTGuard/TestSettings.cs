@@ -22,6 +22,11 @@ public readonly struct TestSettings
             AllowedAudiences = ["https://localhost:7000", "http://localhost:5000"],
             DefaultIssuer = "dotnet-user-jwts",
             AllowedIssuers = [ "dotnet-user-jwts" ],
+            
+            DefaultSignatureAlgorithm = SecurityAlgorithms.HmacSha256, // to use dotnet-user-jwts
+            AllowedAlgorithms = [ SecurityAlgorithms.HmacSha256 ],
+            DisallowedAlgorithms = KnownSecurityAlgorithms.Except([SecurityAlgorithms.HmacSha256]).ToArray(),
+            
             ValidTokenTypes = ["JWT"],
             InvalidTokenTypes = ["none"],
             
