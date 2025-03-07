@@ -138,6 +138,11 @@ public readonly struct TestSettings
     public string DefaultIssuer { get; init; } = "https://localhost:5901";
 
     /// <summary>
+    /// The default endpoint for Duende IdentityServer. Defaults to "https://localhost:5901".
+    /// </summary>
+    public string DuendeHostAddress { get; init; } = "https://localhost:5901";
+    
+    /// <summary>
     /// Collection of allowed issuers. Defaults to [ "https://localhost:5901" ].
     /// </summary>
     public IReadOnlyCollection<string> AllowedIssuers { get; init; } = ["https://localhost:5901"];
