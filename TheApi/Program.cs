@@ -27,6 +27,7 @@ JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 string issuer = "";
 List<string> audiences = new List<string>();
 ICollection<SecurityKey> signingKeys = [];
+string securityAlgorithm = "";
 
 if (!appSettings.UseDevJwt)
 {
@@ -46,6 +47,8 @@ if (!appSettings.UseDevJwt)
     issuer = discoveryDocument.Issuer;
     signingKeys = discoveryDocument.SigningKeys;
     audiences.Add(appSettings.ClientId);
+
+    securityAlgorithm = SecurityAlgorithms.RsaSha256;
 }
 else
 {
@@ -56,12 +59,14 @@ else
     audiences = builder.Configuration.GetSection("Authentication:Schemes:Bearer:ValidAudiences").Get<string[]>()?.ToList() ?? [];
     ArgumentNullException.ThrowIfNullOrWhiteSpace(key, "SigningKeys");
     signingKeys = new List<SecurityKey> { new SymmetricSecurityKey(Convert.FromBase64String(key ?? "")) };
+    securityAlgorithm = SecurityAlgorithms.HmacSha256;
 }
 ArgumentNullException.ThrowIfNullOrWhiteSpace(issuer, "JWT Issuer");
 ArgumentNullException.ThrowIfNull(audiences, "JWT Audiences");
 ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(audiences.Count, 0, "JWT Audiences");
 ArgumentNullException.ThrowIfNull(signingKeys, "JWT Signing Keys");
 ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(signingKeys.Count, 0, "JWT Signing Keys");
+ArgumentException.ThrowIfNullOrWhiteSpace(securityAlgorithm, "JWT Security Algorithm");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -79,7 +84,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidateLifetime = true,
         SaveSigninToken = true,
-        ValidAlgorithms = [SecurityAlgorithms.RsaSha256, SecurityAlgorithms.HmacSha256],
+        ValidAlgorithms = [ securityAlgorithm ], // Only trust the right security algorithm depending on the token's source.
         ValidTypes = ["JWT"],
         RequireAudience = true,
         RequireExpirationTime = true,
