@@ -1,9 +1,7 @@
 using JWTGuard.Helpers;
 
 using Microsoft.AspNetCore.Mvc.Testing;
-using TheApi.Tests.Fixtures;
 using Xunit;
-using static Duende.IdentityServer.Models.IdentityResources;
 
 namespace JWTGuard.Tests;
 
@@ -35,14 +33,9 @@ public abstract class JwtGuardTestBase(TargetApiWebApplicationFactory factory) :
     /// <summary>
     /// Initializes the base class for a test run.
     /// </summary>
-    public async Task InitializeAsync()
+    public Task InitializeAsync()
     {
         Environment.SetEnvironmentVariable("AppSettings__UseDevJwt", "true");
-
-        // Have to get a JWT to turn on dev certs for this project
-        (string jwt, string error) = await TestJwtBuilder.GetTestJwt("jon@doe.com", []);
-        ArgumentNullException.ThrowIfNullOrWhiteSpace(jwt, nameof(jwt));
-        Assert.Equal("", error);
 
         Client = Factory.CreateClient(new WebApplicationFactoryClientOptions
         {
@@ -52,6 +45,7 @@ public abstract class JwtGuardTestBase(TargetApiWebApplicationFactory factory) :
         _serviceScope = Factory.Services.CreateAsyncScope();
         ServiceProvider = _serviceScope.ServiceProvider;
         
+        return Task.CompletedTask;
     }
 
     /// <summary>
