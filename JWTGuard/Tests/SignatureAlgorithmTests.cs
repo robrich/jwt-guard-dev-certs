@@ -56,9 +56,19 @@ public class SignatureAlgorithmTests(TargetApiWebApplicationFactory factory) : J
 
     private Task<string> GetJwtAsync(string signatureAlgorithm)
     {
-        return Factory.CreateJwtBuilder()
-            .WithSignatureAlgorithm(signatureAlgorithm)
-            .BuildAsync();
+        var builder = Factory.CreateJwtBuilder();
+
+        if (signatureAlgorithm == "HS256")
+        {
+            // this forces JwtBuilder to use the secret from dotnet-user-jwts
+            builder.WithSignatureAlgorithm(signatureAlgorithm, "");
+        }
+        else
+        {
+            builder.WithSignatureAlgorithm(signatureAlgorithm);
+        }
+        
+        return builder.BuildAsync();
     }
 
     /// <summary>
