@@ -22,6 +22,7 @@ public readonly struct TestSettings
             AllowedAudiences = ["https://localhost:7000", "http://localhost:5000"],
             DefaultIssuer = "dotnet-user-jwts",
             AllowedIssuers = [ "dotnet-user-jwts" ],
+            ValidTokenTypes = ["JWT"],
             InvalidTokenTypes = ["none"],
             
             // AssertAuthorizedResponse = response => Assert.Equal(StatusCodes.Status204NoContent, (int)response.StatusCode)
