@@ -50,34 +50,41 @@ public class TargetApiWebApplicationFactory : WebApplicationFactory<Program>, IS
     /// </summary>
     async Task<SigningCredentials> ISigningCredentialsProvider.GetSigningCredentialsAsync(string algorithm)
     {
-
-		bool doit = true;
-		if (doit)
-		{
-			var Configuration = new ConfigurationBuilder()
-							//.SetBasePath(env.ContentRootPath)
-							.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-							.AddJsonFile($"appsettings.Development.json", optional: true)
-							.AddUserSecrets<Program>()
-							.AddEnvironmentVariables()
-							.Build();
-			string? key = Configuration.GetSection("Authentication:Schemes:Bearer:SigningKeys:0").GetValue<string>("Value");
-			ArgumentNullException.ThrowIfNullOrWhiteSpace(key, "SigningKeys");
-			return new SigningCredentials(new SymmetricSecurityKey(Convert.FromBase64String(key ?? "")), algorithm);
-		}
-
-		if (_duendeHost is null)
+        if (TestSettings.DuendeSupportedSecurityAlgorithms.Contains(algorithm))
         {
-            throw new InvalidOperationException("The test identity provider is not running!");
+            if (_duendeHost is null)
+            {
+                throw new InvalidOperationException("The test identity provider is not running!");
+            }
+
+            // Generate key material by requesting the discovery document.
+            await HttpClient.GetAsync(
+                $"{TestSettings.CurrentTestSettings.DuendeHostAddress}/.well-known/openid-configuration");
+
+            using var scope = _duendeHost.Services.CreateScope();
+            var keyMaterialService = scope.ServiceProvider.GetRequiredService<IKeyMaterialService>();
+
+            return await keyMaterialService.GetSigningCredentialsAsync([algorithm]);
         }
 
-        // Generate key material by requesting the discovery document.
-        await HttpClient.GetAsync($"{TestSettings.CurrentTestSettings.DefaultIssuer}/.well-known/openid-configuration");
+        if (TestSettings.KnownSecurityAlgorithms.Contains(algorithm))
+        {
+            // HS256, HS384 or HS512
+            // Attempt to read the HMAC secret from dotnet-user-jwts
+            var configuration = new ConfigurationBuilder()
+                //.SetBasePath(env.ContentRootPath)
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile("appsettings.Development.json", optional: true)
+                .AddUserSecrets<Program>()
+                .AddEnvironmentVariables()
+                .Build();
+                
+            var key = configuration.GetSection("Authentication:Schemes:Bearer:SigningKeys:0").GetValue<string>("Value");
+            ArgumentException.ThrowIfNullOrWhiteSpace(key, "SigningKeys");
+            return new SigningCredentials(new SymmetricSecurityKey(Convert.FromBase64String(key ?? "")), algorithm);
+        }
 
-        using var scope = _duendeHost.Services.CreateScope();
-        var keyMaterialService = scope.ServiceProvider.GetRequiredService<IKeyMaterialService>();
-
-        return await keyMaterialService.GetSigningCredentialsAsync([algorithm]);
+        throw new InvalidOperationException("Unsupported signature algorithm: " + algorithm);
     }
 
     /// <summary>
@@ -91,12 +98,12 @@ public class TargetApiWebApplicationFactory : WebApplicationFactory<Program>, IS
     {
         builder.ConfigureTestServices(services =>
         {
-            // Reconfigure (only) the JWT bearer options to use the test identity provider instance.
-            services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
-            {
-                options.Authority = TestSettings.CurrentTestSettings.DefaultIssuer;
-                options.TokenValidationParameters.ValidIssuer = TestSettings.CurrentTestSettings.DefaultIssuer;
-            });
+            // // Reconfigure (only) the JWT bearer options to use the test identity provider instance.
+            // services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+            // {
+            //     options.Authority = TestSettings.CurrentTestSettings.DefaultIssuer;
+            //     options.TokenValidationParameters.ValidIssuer = TestSettings.CurrentTestSettings.DefaultIssuer;
+            // });
         });
     }
 
@@ -109,7 +116,7 @@ public class TargetApiWebApplicationFactory : WebApplicationFactory<Program>, IS
     private void CreateAndRunIdentityProvider()
     {
         var builder = WebApplication.CreateBuilder();
-        builder.WebHost.UseUrls(TestSettings.CurrentTestSettings.DefaultIssuer);
+        builder.WebHost.UseUrls(TestSettings.CurrentTestSettings.DuendeHostAddress);
 
         builder.Services.AddAuthentication();
         builder.Services.AddAuthorization();
