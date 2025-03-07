@@ -15,7 +15,12 @@ namespace JWTGuard.Tests;
 /// </summary>
 public class ExternalSignatureTests(TargetApiWebApplicationFactory factory) : JwtGuardTestBase(factory)
 {
-    [Fact(DisplayName = "When using an external JSON Web Key by specifying the 'jku' and 'kid' claims in the token, the API should return a 401 Unauthorized response.")]
+    private const string SkipBecauseOfSymmetricAlgorithm =
+        "When only allowing a symmetric algorithm, the external key material test can't be run. The key material generator needs to have a least one asymmetric algorithm configured.";
+    
+    [Fact(
+        DisplayName = "When using an external JSON Web Key by specifying the 'jku' and 'kid' claims in the token, the API should return a 401 Unauthorized response.",
+        Skip = SkipBecauseOfSymmetricAlgorithm)]
     internal async Task Accessing_AuthorizedUrl_Is_Unauthorized_For_External_WebKey_Using_jku_Claim()
     {
         // Arrange
@@ -29,7 +34,9 @@ public class ExternalSignatureTests(TargetApiWebApplicationFactory factory) : Jw
         TestSettings.CurrentTestSettings.AssertUnauthorizedResponse(response);
     }
 
-    [Fact(DisplayName = "When using an external JSON Web Key by specifying the 'jwk' claim in the token, the API should return a 401 Unauthorized response.")]
+    [Fact(
+        DisplayName = "When using an external JSON Web Key by specifying the 'jwk' claim in the token, the API should return a 401 Unauthorized response.",
+        Skip = SkipBecauseOfSymmetricAlgorithm)]
     internal async Task Accessing_AuthorizedUrl_Is_Unauthorized_For_External_WebKey_Using_jwk_Claim()
     {
         // Arrange
@@ -43,7 +50,9 @@ public class ExternalSignatureTests(TargetApiWebApplicationFactory factory) : Jw
         TestSettings.CurrentTestSettings.AssertUnauthorizedResponse(response);
     }
 
-    [Fact(DisplayName = "When using an external certificate by specifying the 'x5u' claim in the token, the API should return a 401 Unauthorized response.")]
+    [Fact(
+        DisplayName = "When using an external certificate by specifying the 'x5u' claim in the token, the API should return a 401 Unauthorized response.",
+        Skip = SkipBecauseOfSymmetricAlgorithm)]
     internal async Task Accessing_AuthorizedUrl_Is_Unauthorized_For_External_Certificate_Using_x5u_Claim()
     {
         // Arrange
@@ -57,7 +66,9 @@ public class ExternalSignatureTests(TargetApiWebApplicationFactory factory) : Jw
         TestSettings.CurrentTestSettings.AssertUnauthorizedResponse(response);
     }
 
-    [Fact(DisplayName = "When using an external certificate by specifying the 'x5c' claim in the token, the API should return a 401 Unauthorized response.")]
+    [Fact(
+        DisplayName = "When using an external certificate by specifying the 'x5c' claim in the token, the API should return a 401 Unauthorized response.",
+        Skip = SkipBecauseOfSymmetricAlgorithm)]
     internal async Task Accessing_AuthorizedUrl_Is_Unauthorized_For_External_Certificate_Using_x5c_Claim()
     {
         // Arrange
