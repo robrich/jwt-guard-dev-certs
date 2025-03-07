@@ -19,12 +19,11 @@ public readonly struct TestSettings
         {
             TargetUrl = "/api/test",
             DefaultAudience = "https://localhost:7000",
-            DefaultIssuer = "dotnet-user-jwts",
             AllowedAudiences = ["https://localhost:7000", "http://localhost:5000"],
-            AllowedAlgorithms = [SecurityAlgorithms.RsaSha256],
-            ValidTokenTypes = ["jwt"],
+            DefaultIssuer = "dotnet-user-jwts",
+            AllowedIssuers = [ "dotnet-user-jwts" ],
             InvalidTokenTypes = ["none"],
-            AllowedIssuers = ["dotnet-user-jwts"],
+            
             // AssertAuthorizedResponse = response => Assert.Equal(StatusCodes.Status204NoContent, (int)response.StatusCode)
         };
     }
