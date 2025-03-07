@@ -19,12 +19,17 @@ public readonly struct TestSettings
         {
             TargetUrl = "/api/test",
             DefaultAudience = "https://localhost:7000",
-            DefaultIssuer = "dotnet-user-jwts",
             AllowedAudiences = ["https://localhost:7000", "http://localhost:5000"],
-            AllowedAlgorithms = [SecurityAlgorithms.RsaSha256],
-            ValidTokenTypes = ["jwt"],
+            DefaultIssuer = "dotnet-user-jwts",
+            AllowedIssuers = [ "dotnet-user-jwts" ],
+            
+            DefaultSignatureAlgorithm = SecurityAlgorithms.HmacSha256, // to use dotnet-user-jwts
+            AllowedAlgorithms = [ SecurityAlgorithms.HmacSha256 ],
+            DisallowedAlgorithms = KnownSecurityAlgorithms.Except([SecurityAlgorithms.HmacSha256]).ToArray(),
+            
+            ValidTokenTypes = ["JWT"],
             InvalidTokenTypes = ["none"],
-            AllowedIssuers = ["dotnet-user-jwts"],
+            
             // AssertAuthorizedResponse = response => Assert.Equal(StatusCodes.Status204NoContent, (int)response.StatusCode)
         };
     }
@@ -137,6 +142,11 @@ public readonly struct TestSettings
     /// </summary>
     public string DefaultIssuer { get; init; } = "https://localhost:5901";
 
+    /// <summary>
+    /// The default endpoint for Duende IdentityServer. Defaults to "https://localhost:5901".
+    /// </summary>
+    public string DuendeHostAddress { get; init; } = "https://localhost:5901";
+    
     /// <summary>
     /// Collection of allowed issuers. Defaults to [ "https://localhost:5901" ].
     /// </summary>
