@@ -258,22 +258,7 @@ public class JwtBuilder
         {
             return null;
         }
-
-        bool doit = true;
-        if (doit)
-		{
-			var Configuration = new ConfigurationBuilder()
-							//.SetBasePath(env.ContentRootPath)
-							.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-							.AddJsonFile($"appsettings.Development.json", optional: true)
-                            .AddUserSecrets<Program>()
-							.AddEnvironmentVariables()
-							.Build();
-			string? key = Configuration.GetSection("Authentication:Schemes:Bearer:SigningKeys:0").GetValue<string>("Value");
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(key, "SigningKeys");
-	        return new SigningCredentials(new SymmetricSecurityKey(Convert.FromBase64String(key ?? "")), SignatureAlgorithm);
-        }
-
+        
         if (TestSettings.DuendeSupportedSecurityAlgorithms.Contains(SignatureAlgorithm))
         {
             // Attempt to get the signing credentials for the specified algorithm.
@@ -284,14 +269,25 @@ public class JwtBuilder
         {
             if (string.IsNullOrEmpty(HmacShaSecret))
             {
-                throw new InvalidOperationException("The HMAC secret is not set.");
+                // Attempt to read the HMAC secret from dotnet-user-jwts
+                var configuration = new ConfigurationBuilder()
+                    //.SetBasePath(env.ContentRootPath)
+                    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                    .AddJsonFile("appsettings.Development.json", optional: true)
+                    .AddUserSecrets<Program>()
+                    .AddEnvironmentVariables()
+                    .Build();
+                
+                var key = configuration.GetSection("Authentication:Schemes:Bearer:SigningKeys:0").GetValue<string>("Value");
+                ArgumentException.ThrowIfNullOrWhiteSpace(key, "SigningKeys");
+                return new SigningCredentials(new SymmetricSecurityKey(Convert.FromBase64String(key ?? "")), SignatureAlgorithm);
             }
 
             // Can't generate signing credentials for the specified algorithm using Duende Identity Server. Currently only applies to HMAC algorithms.
             var signinKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(HmacShaSecret));
             return new SigningCredentials(signinKey, SignatureAlgorithm);
         }
-
+        
         // Unknown algorithm
         return null;
     }
